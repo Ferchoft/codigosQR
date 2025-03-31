@@ -1,0 +1,241 @@
+body {
+    font-family: 'Poppins', sans-serif; /* Fuente moderna y legible */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f0f8ff; /* Un fondo azul muy claro */
+    margin: 0;
+    background-image: url('fondo-abstracto.jpg'); /* Reemplaza con tu imagen de fondo */
+    background-size: cover;
+    background-position: center;
+    padding: 20px; /* Añadimos un poco de padding al body */
+    box-sizing: border-box;
+}
+
+.container {
+    background-color: rgba(255, 255, 255, 0.95); /* Fondo blanco con un poco de transparencia */
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    max-width: 90%;
+    width: 700px; /* Aumentamos el ancho máximo */
+    margin-bottom: 30px; /* Espacio entre el generador y el lector */
+}
+
+h1 {
+    margin-bottom: 30px;
+    color: #2c3e50; /* Azul oscuro moderno */
+    font-size: 2.8rem;
+}
+
+.generator-section, .reader-section, .whatsapp-generator-section {
+    margin-bottom: 40px;
+    padding: 30px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.9); /* Fondo blanco con ligera transparencia para las secciones */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.generator-section h2, .reader-section h2, .whatsapp-generator-section h2 {
+    color: #34495e;
+    font-size: 2.2rem;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.whatsapp-generator-section h2 {
+    color: #25d366; /* Color verde de WhatsApp */
+}
+
+.input-group {
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #555;
+    font-size: 1.1rem;
+}
+
+input[type="text"],
+input[type="file"],
+input[type="tel"] {
+    width: calc(100% - 20px);
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 1.1rem;
+    transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="file"]:focus,
+input[type="tel"]:focus {
+    outline: none;
+    border-color: #5e72eb; /* Un azul más vibrante para el foco */
+    box-shadow: 0 0 8px rgba(94, 114, 235, 0.3);
+}
+
+input[type="file"]::file-selector-button {
+    background-color: #5e72eb;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background-color: #4e5cc4;
+}
+
+button {
+    background-color: #00cba9; /* Un verde azulado moderno */
+    color: #fff;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: background-color 0.3s ease, transform 0.2s ease-in-out, box-shadow 0.3s ease;
+    margin-top: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+    background-color: #00a788;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+#generarWhatsappBtn {
+    background-color: #25d366; /* Botón verde de WhatsApp */
+}
+
+#generarWhatsappBtn:hover {
+    background-color: #1c9b4f;
+}
+
+.qr-container {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#qrcode, #whatsappQrcode {
+    margin-bottom: 20px;
+    border: 1px solid #eee;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.button-group {
+    display: flex;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+.button-group button {
+    margin: 0 15px;
+    background-color: #6c757d; /* Gris para los botones de descarga y compartir */
+}
+
+.button-group button:hover {
+    background-color: #5a6268;
+}
+
+.button-group button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.reader-section {
+    text-align: center;
+}
+
+#video {
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    max-width: 100%; /* Hacer el video responsivo */
+    height: auto;
+}
+
+#result {
+    margin-top: 20px;
+    font-weight: bold;
+    color: #28a745; /* Verde para el resultado del lector */
+    font-size: 1.2rem;
+}
+
+.reader-section button {
+    margin: 10px;
+    background-color: #ffc107; /* Amarillo para los botones del lector */
+    color: #212529;
+}
+
+.reader-section button:hover {
+    background-color: #e0a800;
+}
+
+hr {
+    border-top: 1px solid #eee;
+    margin: 40px 0;
+}
+
+/* Media query para pantallas más pequeñas */
+@media (max-width: 768px) {
+    .container {
+        padding: 30px;
+        width: 95%;
+    }
+
+    h1 {
+        font-size: 2.4rem;
+    }
+
+    .generator-section h2, .reader-section h2, .whatsapp-generator-section h2 {
+        font-size: 2rem;
+    }
+
+    .input-group label {
+        font-size: 1rem;
+    }
+
+    input[type="text"],
+    input[type="file"],
+    input[type="tel"] {
+        font-size: 1rem;
+        padding: 12px;
+    }
+
+    button {
+        font-size: 1rem;
+        padding: 14px 28px;
+    }
+
+    .button-group button,
+    .reader-section button {
+        font-size: 1rem;
+        padding: 10px 18px;
+        margin: 5px;
+    }
+
+    #video {
+        width: 100%;
+        height: auto;
+    }
+}
