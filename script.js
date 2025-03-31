@@ -167,25 +167,32 @@ compartirWhatsappBtn.addEventListener('click', () => {
     }
 });
 
-// Lógica del lector de códigos QR (sin cambios)
+// Lógica del lector de códigos QR
 startScanBtn.addEventListener('click', async () => {
     if (!isScanning) {
         try {
-            const constraints = { video: { facingMode: 'environment' } }; // Intenta usar la cámara trasera primero
+            console.log('Intentando acceder a la cámara...');
+            const constraints = { video: true }; // Intenta usar la cámara predeterminada en el ordenador
             stream = await navigator.mediaDevices.getUserMedia(constraints);
+            console.log('Stream de cámara obtenido:', stream);
             video.srcObject = stream;
 
-            codeReader = new ZXing.BrowserQRCodeReader();
+            // Esperar a que el video esté cargado para evitar errores
+            video.addEventListener('loadedmetadata', () => {
+                console.log('Metadatos del video cargados.');
+                codeReader = new ZXing.BrowserQRCodeReader();
+                console.log('ZXing BrowserQRCodeReader inicializado:', codeReader);
 
-            codeReader.decodeFromVideoStream(video, (result, error) => {
-                if (result) {
-                    resultElement.textContent = `Código QR detectado: ${result.text}`;
-                    stopScanning(); // Detener el escaneo al encontrar un código
-                }
+                codeReader.decodeFromVideoStream(video, (result, error) => {
+                    if (result) {
+                        resultElement.textContent = `Código QR detectado: ${result.text}`;
+                        stopScanning(); // Detener el escaneo al encontrar un código
+                    }
 
-                if (error && !(error instanceof ZXing.NotFoundException)) {
-                    console.error('Error de decodificación QR:', error);
-                }
+                    if (error && !(error instanceof ZXing.NotFoundException)) {
+                        console.error('Error de decodificación QR:', error);
+                    }
+                });
             });
 
             isScanning = true;
@@ -194,7 +201,7 @@ startScanBtn.addEventListener('click', async () => {
             resultElement.textContent = 'Escaneando...';
 
         } catch (error) {
-            console.error('Error al acceder a la cámara:', error);
+            console.error('Error AL ACCEDER a la cámara:', error.name, error.message); // Log del nombre y mensaje del error
             resultElement.textContent = 'Error al acceder a la cámara.';
         }
     }
@@ -206,28 +213,29 @@ stopScanBtn.addEventListener('click', () => {
 
 function stopScanning() {
     if (isScanning) {
+        console.log('Deteniendo el escaneo...');
         if (codeReader) {
             codeReader.reset();
+            console.log('ZXing BrowserQRCodeReader reseteado.');
         }
-        if (stream) { // Verifica si el stream existe antes de detenerlo
-            stream.getTracks().forEach(track => track.stop());
-            video.srcObject = null; // Limpia la fuente del video
+        if (stream) {
+            console.log('Stream existe, intentando detener...');
+            stream.getTracks().forEach(track => {
+                track.stop();
+                console.log('Track de video detenido:', track.kind, track.label);
+            });
+            video.srcObject = null;
+            console.log('Fuente de video limpiada.');
+            stream = null; // Limpiar la variable stream
+        } else {
+            console.log('No hay stream para detener.');
         }
         isScanning = false;
         startScanBtn.disabled = false;
         stopScanBtn.disabled = true;
         resultElement.textContent = '';
+        console.log('Escaneo detenido.');
+    } else {
+        console.log('El escaneo no estaba activo.');
     }
 }
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then((registration) => {
-          console.log('Service Worker registered with scope:', registration.scope);
-        })
-        .catch((error) => {
-          console.error('Service Worker registration failed:', error);
-        });
-    });
-  }
