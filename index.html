@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generador y Escáner de QR</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <meta name="theme-color" content="#6366f1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling/lib/qr-code-styling.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('Service Worker registrado'))
+          .catch(err => console.error('Error al registrar Service Worker:', err));
+      });
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; padding: 2rem; background: #f9fafb; color: #111; }
+    .card { background: #fff; padding: 1.5rem; border-radius: 1rem; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
+    label { font-weight: bold; display: block; margin-top: 1rem; }
+    input, select, button { width: 100%; margin-top: 0.3rem; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #ccc; }
+    button { background: #6366f1; color: white; cursor: pointer; border: none; }
+    button:hover { background: #4f46e5; }
+    #qrContainer { margin-top: 1rem; display: flex; justify-content: center; }
+    .history { margin-top: 2rem; font-size: 0.9rem; }
+    #scannerVideo { width: 100%; margin-top: 2rem; border-radius: 0.5rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Generador y Escáner de QR</h1>
+    <label for="qrType">Tipo de QR:</label>
+    <select id="qrType">
+      <option value="text">Texto / URL</option>
+      <option value="whatsapp">WhatsApp</option>
+      <option value="telegram">Telegram</option>
+    </select>
+
+    <label for="qrText">Contenido:</label>
+    <input type="text" id="qrText" placeholder="Texto, número o @usuario" />
+
+    <div id="whatsappMsgField" style="display:none;">
+      <label for="whatsappMsg">Mensaje de WhatsApp:</label>
+      <input type="text" id="whatsappMsg" placeholder="Escribe el mensaje personalizado" />
+    </div>
+
+    <label for="qrSize">Tamaño:</label>
+    <select id="qrSize">
+      <option value="200">200x200</option>
+      <option value="300" selected>300x300</option>
+      <option value="400">400x400</option>
+    </select>
+
+    <label for="logoUpload">Logo (opcional):</label>
+    <input type="file" id="logoUpload" accept="image/*" />
+
+    <label for="dotStyle">Forma del QR:</label>
+    <select id="dotStyle">
+      <option value="square">Cuadrado</option>
+      <option value="dots">Puntos</option>
+      <option value="rounded">Redondeado</option>
+    </select>
+
+    <div id="qrContainer"></div>
+    <p id="linkPreview" style="word-break: break-all; margin-top: 1rem; font-size: 0.9rem; color: #4b5563;"></p>
+    <button onclick="copiarEnlace()">📋 Copiar enlace</button>
+    <button onclick="downloadQR('png')">Descargar PNG</button>
+    <button onclick="downloadQR('svg')">Descargar SVG</button>
+    <button onclick="compartirQR()">Compartir QR</button>
+    <button onclick="copiarQRComoImagen()">📎 Copiar QR como imagen</button>
+
+    <div class="history" id="history"></div>
+
+    <h2>Escanear Código QR</h2>
+    <video id="scannerVideo" autoplay muted playsinline></video>
+    <button onclick="startScanner()">Iniciar Escáner</button>
+    <p id="scanResult"></p>
+  </div>
+
+  <script>
+    window.onload = function () {
+      console.log("✅ App cargada correctamente");
+      try {
+      const qrType = document.getElementById('qrType');
+      const qrText = document.getElementById('qrText');
+      const qrSize = document.getElementById('qrSize');
+      const logoUpload = document.getElementById('logoUpload');
+      const dotStyle = document.getElementById('dotStyle');
+      const qrContainer = document.getElementById('qrContainer');
+      const historyEl = document.getElementById('history');
+      const whatsappMsg = document.getElementById('whatsappMsg');
+      const whatsappMsgField = document.getElementById('whatsappMsgField');
+      let logoData = null;
+
+      const qr = new QRCodeStyling({
+        width: 300,
+        height: 300,
+        type: "svg",
+        data: "",
+        image: "",
+        dotsOptions: { color: "#000", type: "square" },
+        backgroundOptions: { color: "#ffffff" },
+        imageOptions: { crossOrigin: "anonymous", margin: 10 }
+      });
+      qr.append(qrContainer);
+
+      function updateQR() {
+        let input = qrText.value.trim();
+        if (!input) return;
+
+        if (qrType.value === 'whatsapp') {
+          const msg = whatsappMsg.value.trim() || 'Hola';
+          input = `https://wa.me/${input.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`;
+        } else if (qrType.value === 'telegram') {
+          input = `https://t.me/${input.replace(/^@/, '')}`;
+        }
+
+        const size = parseInt(qrSize.value);
+        const dot = dotStyle.value;
+        qr.update({
+          width: size,
+          height: size,
+          data: input,
+          image: logoData || "",
+          dotsOptions: { type: dot }
+        });
+        addToHistory(input);
+        document.getElementById('linkPreview').textContent = input;
+      }
+
+      [qrText, qrSize, qrType, dotStyle, whatsappMsg].forEach(el => el.addEventListener('input', updateQR));
+      qrType.addEventListener('change', () => {
+        whatsappMsgField.style.display = qrType.value === 'whatsapp' ? 'block' : 'none';
+        updateQR();
+      });
+
+      logoUpload.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          logoData = reader.result;
+          updateQR();
+        };
+        reader.readAsDataURL(file);
+      });
+
+      function downloadQR(format) {
+        qr.download({ name: "qr-code", extension: format });
+      }
+
+      function compartirQR() {
+        qr.getRawData("png").then(blob => {
+          const file = new File([blob], "qr-code.png", { type: "image/png" });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], title: "Código QR", text: "¡Escanea este código!" });
+          } else {
+            alert("Tu navegador no soporta compartir archivos QR directamente.");
+          }
+        });
+      }
+
+      function copiarEnlace() {
+        const link = document.getElementById('linkPreview').textContent;
+        navigator.clipboard.writeText(link)
+          .then(() => alert('Enlace copiado al portapapeles'))
+          .catch(() => alert('Error al copiar el enlace'));
+      }
+
+      function copiarQRComoImagen() {
+        const qrNode = document.getElementById("qrContainer");
+        html2canvas(qrNode).then(canvas => {
+          canvas.toBlob(blob => {
+            const file = new File([blob], "qr-code.png", { type: "image/png" });
+            navigator.clipboard.write([new ClipboardItem({ 'image/png': file })])
+              .then(() => alert("Código QR copiado como imagen."))
+              .catch(() => alert("Error al copiar el QR como imagen."));
+          });
+        });
+      }
+
+      function addToHistory(data) {
+        let hist = JSON.parse(localStorage.getItem('qr-history') || '[]');
+        if (!hist.includes(data)) {
+          hist.unshift(data);
+          if (hist.length > 10) hist.pop();
+          localStorage.setItem('qr-history', JSON.stringify(hist));
+          renderHistory();
+        }
+      }
+
+      function renderHistory() {
+        let hist = JSON.parse(localStorage.getItem('qr-history') || '[]');
+        historyEl.innerHTML = '<strong>Historial:</strong><ul>' + hist.map(d => `<li>${d}</li>`).join('') + '</ul>';
+      }
+      renderHistory();
+
+      async function startScanner() {
+        const codeReader = new ZXing.BrowserQRCodeReader();
+        const videoElement = document.getElementById("scannerVideo");
+        try {
+          const result = await codeReader.decodeOnceFromVideoDevice(undefined, videoElement);
+          document.getElementById("scanResult").textContent = `Resultado: ${result.text}`;
+          addToHistory(result.text);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      window.startScanner = startScanner;
+      } catch (e) {
+        console.error('❌ Error al iniciar la app:', e);
+        alert('Ocurrió un error al cargar la aplicación. Revisa la consola para más detalles.');
+      }
+    }
+  </script>
+</body>
+</html>
